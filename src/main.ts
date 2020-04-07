@@ -1,4 +1,4 @@
-import { Sudoku } from './sudoku'
+import { CellType, Sudoku } from './sudoku'
 
 const sudoku = new Sudoku()
 
@@ -7,37 +7,48 @@ const content = document.getElementById('content-inner')!
 content.innerHTML = ''
 content.append(sudoku.elem)
 
-let mode: 'initial' | 'solve' = 'initial'
+const keydownListener = (e: KeyboardEvent) => {
+  const cell = sudoku.selected
+  if (sudoku.canEdit(cell)) {
 
-window.addEventListener('keydown', e => {
-  if (sudoku.selected != null) {
     if (e.key === 'Backspace') {
       e.preventDefault()
-      if (mode === 'initial' || !sudoku.selected.elem.classList.contains('initial')) {
-        sudoku.selected.value = null
+      cell.value = undefined
+
+      if (cell.type === CellType.Init) {
+        cell.type = CellType.Normal
       }
     } else if (!isNaN(+e.key)) {
       const val = +e.key
       e.preventDefault()
-      if (sudoku.method === 'hint') {
-        sudoku.selected.toggleHint(val)
-      } else if (mode === 'initial' || !sudoku.selected.elem.classList.contains('initial')) {
-        sudoku.selected.value = val
+
+      if (sudoku.nextType === CellType.Hint) {
+        cell.toggleHint(val)
+      } else {
+        cell.value = val
+        cell.type = sudoku.nextType
         sudoku.focus(val)
-        if (mode === 'initial') {
-          sudoku.selected.elem.classList.add('initial')
-        }
       }
     } else if (e.key === 'i') {
-      mode = mode === 'initial' ? 'solve' : 'initial'
+      sudoku.nextType = sudoku.nextType === CellType.Init
+        ? CellType.Normal
+        : CellType.Init
     }
   }
   if (e.key === 'a') {
     sudoku.autofill()
   }
+}
+
+window.addEventListener('keydown', keydownListener)
+
+if (module.hot) module.hot.addDisposeHandler(() => {
+  window.removeEventListener('keydown', keydownListener)
 })
 
 function init(matrix: string[]) {
+  sudoku.autoHighlightErrors = false
+
   for (let ri = 0; ri < sudoku.rows.length; ++ri) {
     const row = sudoku.rows[ri]
     const mat = matrix[ri].split(/ +/g)
@@ -46,12 +57,15 @@ function init(matrix: string[]) {
       const v = mat[ci]
       if (v !== '-') {
         row[ci].value = +v
-        row[ci].elem.classList.add('initial')
+        row[ci].type = CellType.Init
       }
     }
   }
+
+  sudoku.autoHighlightErrors = true
 }
 
+sudoku.nextType = CellType.Init
 init([
   '1 - -  - - 7  - 9 -',
   '- 3 -  - 2 -  - - 8',
@@ -63,4 +77,4 @@ init([
   '- 4 -  - - -  - - 7',
   '- - 7  - - -  3 - -',
 ])
-mode = 'solve'
+sudoku.nextType = CellType.Normal

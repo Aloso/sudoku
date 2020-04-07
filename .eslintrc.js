@@ -85,7 +85,6 @@ module.exports = {
             'Boolean',
             'boolean',
             'Undefined',
-            'undefined'
         ],
         'id-match': 'error',
         'import/no-deprecated': 'warn',

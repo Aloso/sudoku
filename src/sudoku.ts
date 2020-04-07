@@ -1,9 +1,10 @@
 import { Cell, Value } from './cell'
 
-export enum Method {
-  Hint = 'hint',
+export enum CellType {
   Normal = 'normal',
-  Marked = 'marked',
+  Init = 'init',
+  Hint = 'hint',
+  Mark = 'mark',
 }
 
 export class Sudoku {
@@ -15,10 +16,12 @@ export class Sudoku {
   readonly blocks: Cell[][] = []
 
   private sel: Cell | null = null
-  private met: Method = Method.Normal
+  private nextTy: CellType = CellType.Normal
 
   private focused: number[] = []
+
   private hasErrors = false
+  private autoHlErrors = true
 
   constructor(
     readonly size = 9,
@@ -29,7 +32,7 @@ export class Sudoku {
 
     const changeCell = (row: number, col: number, v: Value) => {
       this.focus(v)
-      this.highlightErrors()
+      if (this.autoHlErrors) this.highlightErrors()
     }
 
     for (let i = 0; i < size; i++) {
@@ -74,26 +77,34 @@ export class Sudoku {
     if (selected !== this.sel) {
       if (this.sel != null) {
         this.sel.elem.classList.remove('selected')
-        this.sel.elem.classList.remove(this.met)
+        this.sel.elem.classList.remove('next-' + this.nextTy)
       }
       this.sel = selected
       if (this.sel != null) {
         this.sel.elem.classList.add('selected')
-        this.sel.elem.classList.add(this.met)
+        this.sel.elem.classList.add('next-' + this.nextTy)
       }
     }
   }
 
-  get method(): Method {
-    return this.met
+  get nextType(): CellType {
+    return this.nextTy
   }
 
-  set method(method: Method) {
-    if (method !== this.met) {
-      if (this.sel != null) this.sel.elem.classList.remove(this.met)
-      this.met = method
-      if (this.sel != null) this.sel.elem.classList.add(this.met)
+  set nextType(ty: CellType) {
+    if (ty !== this.nextTy) {
+      if (this.sel != null) {
+        this.sel.elem.classList.remove('next-' + this.nextTy)
+        this.nextTy = ty
+        this.sel.elem.classList.add('next-' + this.nextTy)
+      } else {
+        this.nextTy = ty
+      }
     }
+  }
+
+  canEdit(sel = this.sel): sel is Cell {
+    return sel != null && (sel.type !== CellType.Init || this.nextTy === CellType.Init)
   }
 
   focus(val: Value) {
@@ -118,12 +129,22 @@ export class Sudoku {
     this.rows.forEach(row => row.forEach(cell => cell.update()))
   }
 
-  highlightErrors() {
-    this.elem.querySelectorAll('td.error').forEach(el => el.classList.remove('error'))
+  clearErrorHighlights() {
+    this.elem.querySelectorAll('td.error')
+      .forEach(el => el.classList.remove('error'))
+  }
 
+  highlightErrors() {
+    this.clearErrorHighlights()
     this.hasErrors = false
     this.rows.forEach(row => row.forEach(cell => {
       this.hasErrors = cell.highlightErrorIfWrong() || this.hasErrors
     }))
+  }
+
+  set autoHighlightErrors(highlight: boolean) {
+    this.autoHlErrors = highlight
+    if (highlight) this.highlightErrors()
+    else this.clearErrorHighlights()
   }
 }

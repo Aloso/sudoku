@@ -1,8 +1,8 @@
-import { Method, Sudoku } from './sudoku'
+import { CellType, Sudoku } from './sudoku'
 
 export type Value =
   | number
-  | null
+  | undefined
   | Hints
 
 export interface Hints {
@@ -32,7 +32,8 @@ function hintsToString(hints: Hints): string {
 export class Cell {
   readonly elem = document.createElement('td')
 
-  private val: Value = null
+  private val: Value
+  private ty: CellType = CellType.Normal
 
   constructor(
     private readonly parent: Sudoku,
@@ -48,8 +49,10 @@ export class Cell {
     this.elem.addEventListener('mousedown', e => {
       e.preventDefault()
       if (e.button >= 0 && e.button <= 2) {
+        if (this.parent.nextType !== CellType.Init || e.button !== 0) {
+          this.parent.nextType = [CellType.Normal, CellType.Mark, CellType.Hint][e.button]
+        }
         this.parent.selected = this
-        this.parent.method = [Method.Normal, Method.Marked, Method.Hint][e.button]
         this.parent.focus(this.val)
       }
     })
@@ -57,8 +60,6 @@ export class Cell {
 
   set value(newValue: Value) {
     if (newValue !== this.val) {
-      this.elem.classList.remove('mark')
-
       if (typeof this.val === 'number') {
         this.elem.classList.remove('c' + this.val)
       }
@@ -67,12 +68,34 @@ export class Cell {
 
       if (typeof this.val === 'number') {
         this.elem.classList.add('c' + this.val)
-
-        if (this.parent.method === Method.Marked) {
-          this.elem.classList.add('mark')
-        }
       }
       this.updateContent()
+    }
+  }
+
+  get type(): CellType {
+    return this.ty
+  }
+
+  set type(ty: CellType) {
+    if (ty !== this.ty) {
+      if (this.ty === CellType.Init) {
+        this.elem.classList.remove('init')
+      } else if (this.ty === CellType.Mark) {
+        this.elem.classList.remove('mark')
+      } else if (this.ty === CellType.Hint) {
+        this.elem.classList.remove('hint')
+      }
+
+      this.ty = ty
+
+      if (this.ty === CellType.Init) {
+        this.elem.classList.add('init')
+      } else if (this.ty === CellType.Mark) {
+        this.elem.classList.add('mark')
+      } else if (this.ty === CellType.Hint) {
+        this.elem.classList.add('hint')
+      }
     }
   }
 
@@ -121,7 +144,7 @@ export class Cell {
 
       if (typeof this.val === 'number') {
         const error = numsInDomain[this.val]
-        if (error) this.elem.classList.add('error')
+        if (error) this.highlightError()
         return error
       } else {
         const value: Hints = this.val
@@ -129,14 +152,22 @@ export class Cell {
 
         numsInDomain.forEach((v, i) => {
           if (v && value[i]) {
+            this.highlightHintError(i)
             error = true
-            this.elem.querySelector(`.c${i}`)?.classList?.add('error')
           }
         })
         return error
       }
     }
     return false
+  }
+
+  highlightError() {
+    this.elem.classList.add('error')
+  }
+
+  highlightHintError(hint: number) {
+    this.elem.querySelector(`.c${hint}`)?.classList?.add('error')
   }
 
   numbersInDomain(): boolean[] {
@@ -153,24 +184,14 @@ export class Cell {
     return nums
   }
 
-  highlightError() {
-    this.elem.classList.add('error')
-    return
-  }
-
-  highlightHintError(hint: number) {
-    this.elem.querySelector(`.c${hint}`)?.classList?.add('error')
-    return
-  }
-
   private updateContent() {
-    const val = this.val
-    this.elem.innerHTML = val === null
-      ? ''
-      : typeof val === 'number'
-        ? '' + val
-        : hintsToString(val)
-
-    this.onChange(this.row, this.col, val)
+    switch (typeof this.val) {
+      case 'number': this.elem.innerHTML = '' + this.val
+        break
+      case 'object': this.elem.innerHTML = hintsToString(this.val)
+        break
+      case 'undefined': this.elem.innerHTML = ''
+    }
+    this.onChange(this.row, this.col, this.val)
   }
 }
