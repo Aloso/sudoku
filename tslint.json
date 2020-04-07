@@ -36,6 +36,7 @@
     "no-redundant-jsdoc": true,
     "no-shadowed-variable": false,
     "no-switch-case-fall-through": true,
+    "no-bitwise": false,
     "no-trailing-whitespace": {
       "severity": "warn"
     },

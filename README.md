@@ -1,6 +1,8 @@
-# hello_world
-A template for a [typescript](https://www.typescriptlang.org)/[sass](https://sass-lang.com) web app, with polyfills and a CSS reset
+# sudoku
 
+Sudoku generator and solver
+
+<!--
 ## Highlights
 
 - Webpack 4, Typescript, TSLint/ESLint, Sass
@@ -114,3 +116,4 @@ A template for a [typescript](https://www.typescriptlang.org)/[sass](https://sas
    ```ts
    import _ from 'lodash'
    ```
+-->

@@ -13,7 +13,7 @@ module.exports = (env, argv) => {
   const cssLoader = {
     loader: 'css-loader',
     options: {
-      modules: true,
+      modules: false,
       sourceMap: true,
       importLoaders: 1,
     }

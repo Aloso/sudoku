@@ -29,7 +29,7 @@ module.exports = {
             'off',
             { accessibility: 'explicit' }
         ],
-        '@typescript-eslint/indent': 'error',
+        '@typescript-eslint/indent': ['error', 2],
         '@typescript-eslint/interface-name-prefix': 'off',
         '@typescript-eslint/member-delimiter-style': [
             'error',
@@ -63,6 +63,7 @@ module.exports = {
         '@typescript-eslint/triple-slash-reference': 'error',
         '@typescript-eslint/type-annotation-spacing': 'error',
         '@typescript-eslint/unified-signatures': 'error',
+        '@typescript-eslint/explicit-function-return-type': 'off',
         'arrow-body-style': 'error',
         'arrow-parens': ['off', 'as-needed'],
         'camelcase': 'error',
@@ -95,7 +96,7 @@ module.exports = {
             { code: 140 }
         ],
         'new-parens': 'error',
-        'no-bitwise': 'error',
+        'no-bitwise': 'off',
         'no-caller': 'error',
         'no-cond-assign': 'error',
         'no-console': [
@@ -140,12 +141,12 @@ module.exports = {
         'no-undef-init': 'error',
         'no-underscore-dangle': 'error',
         'no-unsafe-finally': 'error',
-        'no-unused-expressions': 'error',
+        'no-unused-expressions': 'off',
         'no-unused-labels': 'error',
         'no-var': 'error',
         'object-shorthand': 'error',
         'one-var': ['error', 'never'],
-        'prefer-arrow/prefer-arrow-functions': 'error',
+        'prefer-arrow/prefer-arrow-functions': 'off',
         'prefer-const': 'error',
         '@typescript-eslint/prefer-readonly': 'error',
         'radix': 'error',

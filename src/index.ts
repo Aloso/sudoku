@@ -14,9 +14,8 @@ import 'regenerator-runtime/runtime'
 // Import stylesheets!
 // NOTE: Styles are extracted to a CSS file during the build process.
 import './index.sass'
+import './main'
 
 // enable hot reloading for this module:
 if (module.hot) module.hot.accept()
 
-// Run `npm start` and open localhost:9000, then modify this string:
-document.getElementById('app')!.textContent = 'Hello world!'
