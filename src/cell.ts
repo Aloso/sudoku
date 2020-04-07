@@ -5,9 +5,7 @@ export type Value =
   | undefined
   | Hints
 
-export interface Hints {
-  [key: number]: boolean
-}
+export type Hints = boolean[]
 
 function hintsToString(hints: Hints): string {
   return `<table class="hints">
@@ -100,18 +98,17 @@ export class Cell {
   }
 
   toggleHint(hint: number) {
-    this.elem.classList.remove('mark')
+    this.type = CellType.Hint
 
-    if (this.val == null || typeof this.val === 'number') {
-      this.val = []
-    }
+    if (typeof this.val !== 'object') this.val = []
     this.val[hint] = !this.val[hint]
+
     this.updateContent()
   }
 
   fillAllHints() {
     if (typeof this.val !== 'number') {
-      this.val = [true, true, true, true, true, true, true, true, true, true]
+      this.val = [false, true, true, true, true, true, true, true, true, true]
     }
   }
 
@@ -134,7 +131,13 @@ export class Cell {
     this.elem.className = this.elem.className.replace(/c\d+\s*/g, '')
     if (typeof this.val === 'number') {
       this.elem.classList.add('c' + this.val)
+      if (this.ty === CellType.Hint) this.type = CellType.Normal
+    } else if (typeof this.val === 'object') {
+      this.type = CellType.Hint
+    } else {
+      this.type = CellType.Normal
     }
+
     this.updateContent()
   }
 
@@ -182,6 +185,42 @@ export class Cell {
     this.parent.blocks[this.blockIdx].forEach(callback)
 
     return nums
+  }
+
+  highlightTipIfSingle() {
+    if (this.ty === CellType.Hint) {
+      const hints = this.val as Hints
+      let nakedCount = 0
+      for (const hint of hints) {
+        if (hint) nakedCount++
+      }
+      if (nakedCount === 1) {
+        this.highlightTip()
+      } else {
+        hints.forEach((hint, i) => {
+          if (hint) {
+            const callback = (cell: Cell): boolean =>
+              cell === this || typeof cell.val !== 'object' || !cell.val[i]
+
+            if (
+              this.parent.rows[this.row].every(callback) ||
+              this.parent.cols[this.col].every(callback) ||
+              this.parent.blocks[this.blockIdx].every(callback)
+            ) {
+              this.highlightHintTip(i)
+            }
+          }
+        })
+      }
+    }
+  }
+
+  highlightTip() {
+    this.elem.classList.add('tip')
+  }
+
+  highlightHintTip(hint: number) {
+    this.elem.querySelector(`.c${hint}`)?.classList?.add('tip')
   }
 
   private updateContent() {

@@ -22,6 +22,7 @@ export class Sudoku {
 
   private hasErrors = false
   private autoHlErrors = true
+  private autoHlTips = true
 
   constructor(
     readonly size = 9,
@@ -33,6 +34,7 @@ export class Sudoku {
     const changeCell = (row: number, col: number, v: Value) => {
       this.focus(v)
       if (this.autoHlErrors) this.highlightErrors()
+      if (this.autoHlTips) this.highlightTips()
     }
 
     for (let i = 0; i < size; i++) {
@@ -134,6 +136,11 @@ export class Sudoku {
       .forEach(el => el.classList.remove('error'))
   }
 
+  clearTipHighlights() {
+    this.elem.querySelectorAll('td.tip')
+      .forEach(el => el.classList.remove('tip'))
+  }
+
   highlightErrors() {
     this.clearErrorHighlights()
     this.hasErrors = false
@@ -142,9 +149,23 @@ export class Sudoku {
     }))
   }
 
+  highlightTips() {
+    this.clearTipHighlights()
+
+    this.rows.forEach(row => row.forEach(cell => {
+      cell.highlightTipIfSingle()
+    }))
+  }
+
   set autoHighlightErrors(highlight: boolean) {
     this.autoHlErrors = highlight
     if (highlight) this.highlightErrors()
     else this.clearErrorHighlights()
+  }
+
+  set autoHighlightTips(highlight: boolean) {
+    this.autoHlTips = highlight
+    if (highlight) this.highlightTips()
+    else this.clearTipHighlights()
   }
 }

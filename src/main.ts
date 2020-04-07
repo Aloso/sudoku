@@ -25,8 +25,8 @@ const keydownListener = (e: KeyboardEvent) => {
       if (sudoku.nextType === CellType.Hint) {
         cell.toggleHint(val)
       } else {
-        cell.value = val
         cell.type = sudoku.nextType
+        cell.value = val
         sudoku.focus(val)
       }
     } else if (e.key === 'i') {
@@ -48,6 +48,7 @@ if (module.hot) module.hot.addDisposeHandler(() => {
 
 function init(matrix: string[]) {
   sudoku.autoHighlightErrors = false
+  sudoku.autoHighlightTips = false
 
   for (let ri = 0; ri < sudoku.rows.length; ++ri) {
     const row = sudoku.rows[ri]
@@ -63,6 +64,7 @@ function init(matrix: string[]) {
   }
 
   sudoku.autoHighlightErrors = true
+  sudoku.autoHighlightTips = true
 }
 
 sudoku.nextType = CellType.Init
