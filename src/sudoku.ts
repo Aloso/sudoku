@@ -126,9 +126,17 @@ export class Sudoku {
   }
 
   autofill() {
+    const errorsBefore = this.autoHlErrors
+    const tipsBefore = this.autoHlTips
+    this.autoHlErrors = false
+    this.autoHlTips = false
+
     this.rows.forEach(row => row.forEach(cell => cell.fillAllHints()))
     this.rows.forEach(row => row.forEach(cell => cell.clearSameHints()))
     this.rows.forEach(row => row.forEach(cell => cell.update()))
+
+    this.autoHighlightErrors = errorsBefore
+    this.autoHighlightTips = tipsBefore
   }
 
   clearErrorHighlights() {
@@ -153,7 +161,7 @@ export class Sudoku {
     this.clearTipHighlights()
 
     this.rows.forEach(row => row.forEach(cell => {
-      cell.highlightTipIfSingle()
+      cell.highlightNakedAndHidden()
     }))
   }
 

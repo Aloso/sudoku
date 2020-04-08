@@ -18,7 +18,7 @@ const keydownListener = (e: KeyboardEvent) => {
       if (cell.type === CellType.Init) {
         cell.type = CellType.Normal
       }
-    } else if (!isNaN(+e.key)) {
+    } else if (!isNaN(+e.key) && e.key !== '0') {
       const val = +e.key
       e.preventDefault()
 

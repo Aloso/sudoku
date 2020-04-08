@@ -57,6 +57,12 @@ nav
           color: black
           font-weight: bold
 
+        &.mark
+          color: #3da92b
+
+        &.hint
+          overflow: hidden
+
         &.selected.next-normal
           background-color: #ccefff
         &.selected.next-init
@@ -73,6 +79,7 @@ nav
           border-collapse: collapse
           font-size: 16px
           font-weight: normal
+          margin: -3px 0
 
           td
             padding: 0
@@ -82,6 +89,11 @@ nav
             &.hide
               color: transparent
               text-shadow: none
+
+          tr:first-child td
+            padding-top: 5px
+          tr:last-child td
+            padding-bottom: 5px
 
 
         &.block
@@ -110,12 +122,11 @@ nav
   color: #008aff
   text-shadow: 0 0 2px white, 0 0 4px white
 
-
-td.mark
-  color: #3da92b !important
-
 td.tip:not(.error)
-  background-color: #ffcb73 !important
+  background-color: #cffabb !important
+
+  &.selected
+    background-color: #baf097 !important
 
 td.error
   color: red !important

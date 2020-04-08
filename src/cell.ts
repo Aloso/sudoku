@@ -27,6 +27,20 @@ function hintsToString(hints: Hints): string {
   </table>`
 }
 
+function isSubsetOfHints(outer: Hints, inner: Hints): boolean {
+  for (let i = 1; i <= 9; ++i) {
+    if (outer[i] && !inner[i]) return false
+  }
+  return true
+}
+
+function hasHintIntersection(h1: Hints, h2: Hints): boolean {
+  for (let i = 1; i <= 9; ++i) {
+    if (h1[i] && h2[i]) return true
+  }
+  return false
+}
+
 export class Cell {
   readonly elem = document.createElement('td')
 
@@ -187,7 +201,7 @@ export class Cell {
     return nums
   }
 
-  highlightTipIfSingle() {
+  highlightNakedAndHidden() {
     if (this.ty === CellType.Hint) {
       const hints = this.val as Hints
       let nakedCount = 0
@@ -208,6 +222,39 @@ export class Cell {
               this.parent.blocks[this.blockIdx].every(callback)
             ) {
               this.highlightHintTip(i)
+            } else {
+              [
+                this.parent.rows[this.row],
+                this.parent.cols[this.col],
+                this.parent.blocks[this.blockIdx],
+              ].forEach((cells: Cell[]) => {
+                const colHiddenSiblings: Cell[] = []
+                const colHiddenNotSiblings: Cell[] = []
+
+                for (const cell of cells) {
+                  if (cell !== this && typeof cell.val === 'object') {
+                    if (isSubsetOfHints(cell.val, hints)) {
+                      colHiddenSiblings.push(cell)
+                    } else {
+                      colHiddenNotSiblings.push(cell)
+                    }
+                  }
+                }
+
+                if (
+                  colHiddenSiblings.length >= nakedCount - 1 &&
+                  colHiddenNotSiblings.some((c) => hasHintIntersection(c.val as Hints, hints))
+                ) {
+                  const hintSelectors: string[] = []
+                  hints.forEach((h, i) => {
+                    if (h) hintSelectors.push(`.c${i}`)
+                  })
+                  const hintSelector = hintSelectors.join(', ')
+
+                  this.highlightHintTips(hintSelector)
+                  colHiddenSiblings.forEach(sib => sib.highlightHintTips(hintSelector))
+                }
+              })
             }
           }
         })
@@ -221,6 +268,10 @@ export class Cell {
 
   highlightHintTip(hint: number) {
     this.elem.querySelector(`.c${hint}`)?.classList?.add('tip')
+  }
+
+  highlightHintTips(hintSelector: string) {
+    this.elem.querySelectorAll(hintSelector).forEach(h => h.classList.add('tip'))
   }
 
   private updateContent() {
