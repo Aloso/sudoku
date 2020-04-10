@@ -10,16 +10,24 @@ content.innerHTML = ''
 content.append(sudoku.elem)
 
 const keydownListener = (e: KeyboardEvent) => {
-  e.preventDefault()
+  if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
 
   const cell = sudoku.selected
 
   if (e.key === 'a') {
+    e.preventDefault()
     sudoku.autofill()
   } else if (sudoku.canEditCell(cell)) {
-    if (e.key === 'Backspace') clearCell(cell)
-    else if (e.key === 'i') toggleInitMode()
-    else inputNum(cell, +e.key)
+    if (e.key === 'Backspace') {
+      e.preventDefault()
+      clearCell(cell)
+    } else if (e.key === 'i') {
+      e.preventDefault()
+      toggleInitMode()
+    } else if (isNum(+e.key)) {
+      e.preventDefault()
+      inputNum(cell, +e.key)
+    }
   }
 }
 

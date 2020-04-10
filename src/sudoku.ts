@@ -148,8 +148,8 @@ export class Sudoku {
   }
 
   clearTipHighlights() {
-    this.elem.querySelectorAll('td.tip')
-      .forEach(el => el.classList.remove('tip'))
+    this.elem.querySelectorAll('td.tip, td.warn')
+      .forEach(el => el.classList.remove('tip', 'warn'))
   }
 
   highlightAndDeleteErrors() {

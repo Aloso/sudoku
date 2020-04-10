@@ -191,6 +191,14 @@ export class Cell {
     return nums
   }
 
+  getDomainCells(): [Cell[], Cell[], Cell[]] {
+    return [
+      this.sudoku.rows[this.row],
+      this.sudoku.cols[this.col],
+      this.sudoku.blocks[this.blockIdx],
+    ]
+  }
+
   highlightNakedAndHidden() {
     if (this.ty === CellType.Hint) {
       const hints = this.val as Hints
@@ -210,50 +218,43 @@ export class Cell {
           ) {
             this.highlightHintTip(bit)
           } else {
-            [
-              this.sudoku.rows[this.row],
-              this.sudoku.cols[this.col],
-              this.sudoku.blocks[this.blockIdx],
-            ].forEach((cells: Cell[]) => {
-              const colHiddenSiblings: Cell[] = []
-              const colHiddenNotSiblings: Cell[] = []
+            for (const cells of this.getDomainCells()) {
+              const hiddenSiblings: Cell[] = []
+              const otherHintSiblings: Cell[] = []
 
               for (const cell of cells) {
                 if (cell !== this && cell.val instanceof Hints) {
-                  if (cell.val.isSubsetOf(hints)) {
-                    colHiddenSiblings.push(cell)
-                  } else {
-                    colHiddenNotSiblings.push(cell)
-                  }
+                  if (cell.val.isSubsetOf(hints)) hiddenSiblings.push(cell)
+                  else otherHintSiblings.push(cell)
                 }
               }
 
               if (
-                colHiddenSiblings.length >= nakedCount - 1 &&
-                colHiddenNotSiblings.some((c) => (c.val as Hints).intersects(hints))
+                hiddenSiblings.length >= nakedCount - 1 &&
+                otherHintSiblings.some((c) => (c.val as Hints).intersects(hints))
               ) {
-                const hintSelector = hints.bits.map(n => `.c${n}`).join(', ')
-
-                this.highlightHintTips(hintSelector)
-                colHiddenSiblings.forEach(sib => sib.highlightHintTips(hintSelector))
+                for (const sib of otherHintSiblings) {
+                  const bits = (sib.val as Hints).bits.filter(b => hints.has(b))
+                  if (bits.length) sib.highlightHintTips(bits.map(n => `.c${n}`).join(', '), 'warn')
+                }
               }
-            })
+            }
           }
         })
       }
     }
   }
 
-  highlightTip() {
-    this.elem.classList.add('tip')
+  highlightTip(cssClass: 'tip' | 'warn' = 'tip') {
+    this.elem.classList.add(cssClass)
   }
 
-  highlightHintTip(bit: Bit) {
-    this.elem.querySelector(`.c${bit}`)?.classList?.add('tip')
+  highlightHintTip(bit: Bit, cssClass: 'tip' | 'warn' = 'tip') {
+    this.elem.querySelector(`.c${bit}`)?.classList?.add(cssClass)
   }
 
-  highlightHintTips(hintSelector: string) {
-    this.elem.querySelectorAll(hintSelector).forEach(h => h.classList.add('tip'))
+  highlightHintTips(hintSelector: string, cssClass: 'tip' | 'warn' = 'tip') {
+    this.elem.querySelectorAll(hintSelector).forEach(h => h.classList.add(cssClass))
   }
 
   private updateContent() {
