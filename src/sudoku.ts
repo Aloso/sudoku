@@ -1,6 +1,6 @@
 import { Cell, Value } from './cell'
 import { Hints } from './hints'
-import { allBits, Bit, fromBit } from './numbers'
+import { allBits, Bit } from './numbers'
 
 export enum CellType {
   Normal = 'normal',
@@ -22,9 +22,9 @@ export class Sudoku {
 
   private focused: Bit[] = []
 
-  private hasErrors = false
   private autoHlErrors = true
   private autoHlTips = true
+  private readonly autoDelErrorHints = true
 
   constructor(
     readonly size = 9,
@@ -35,7 +35,7 @@ export class Sudoku {
 
     const changeCell = (row: number, col: number, v: Value) => {
       this.focus(v)
-      if (this.autoHlErrors) this.highlightErrors()
+      if (this.autoHlErrors) this.highlightAndDeleteErrors()
       if (this.autoHlTips) this.highlightTips()
     }
 
@@ -107,7 +107,7 @@ export class Sudoku {
     }
   }
 
-  canEdit(sel = this.sel): sel is Cell {
+  canEditCell(sel = this.sel): sel is Cell {
     return sel != null && (sel.type !== CellType.Init || this.nextTy === CellType.Init)
   }
 
@@ -152,11 +152,10 @@ export class Sudoku {
       .forEach(el => el.classList.remove('tip'))
   }
 
-  highlightErrors() {
+  highlightAndDeleteErrors() {
     this.clearErrorHighlights()
-    this.hasErrors = false
     this.rows.forEach(row => row.forEach(cell => {
-      this.hasErrors = cell.highlightErrorIfWrong() || this.hasErrors
+      cell.highlightAndDeleteErrorIfWrong()
     }))
   }
 
@@ -170,7 +169,7 @@ export class Sudoku {
 
   set autoHighlightErrors(highlight: boolean) {
     this.autoHlErrors = highlight
-    if (highlight) this.highlightErrors()
+    if (highlight) this.highlightAndDeleteErrors()
     else this.clearErrorHighlights()
   }
 
@@ -178,5 +177,9 @@ export class Sudoku {
     this.autoHlTips = highlight
     if (highlight) this.highlightTips()
     else this.clearTipHighlights()
+  }
+
+  get autoDeleteErrorHints(): boolean {
+    return this.autoDelErrorHints
   }
 }

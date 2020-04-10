@@ -34,7 +34,7 @@ export class Cell {
   private ty: CellType = CellType.Normal
 
   constructor(
-    private readonly parent: Sudoku,
+    private readonly sudoku: Sudoku,
     readonly row: number,
     readonly col: number,
     readonly blockIdx: number,
@@ -47,11 +47,11 @@ export class Cell {
     this.elem.addEventListener('mousedown', e => {
       e.preventDefault()
       if (e.button >= 0 && e.button <= 2) {
-        if (this.parent.nextType !== CellType.Init || e.button !== 0) {
-          this.parent.nextType = [CellType.Normal, CellType.Mark, CellType.Hint][e.button]
+        if (this.sudoku.nextType !== CellType.Init || e.button !== 0) {
+          this.sudoku.nextType = [CellType.Normal, CellType.Mark, CellType.Hint][e.button]
         }
-        this.parent.selected = this
-        this.parent.focus(this.val)
+        this.sudoku.selected = this
+        this.sudoku.focus(this.val)
       }
     })
   }
@@ -124,9 +124,9 @@ export class Cell {
   clearSameHints() {
     const val = this.val
     if (val != null && typeof val === 'number') {
-      this.parent.rows[this.row].forEach(cell => cell.removeHint(val))
-      this.parent.cols[this.col].forEach(cell => cell.removeHint(val))
-      this.parent.blocks[this.blockIdx].forEach(cell => cell.removeHint(val))
+      this.sudoku.rows[this.row].forEach(cell => cell.removeHint(val))
+      this.sudoku.cols[this.col].forEach(cell => cell.removeHint(val))
+      this.sudoku.blocks[this.blockIdx].forEach(cell => cell.removeHint(val))
     }
   }
 
@@ -144,28 +144,29 @@ export class Cell {
     this.updateContent()
   }
 
-  highlightErrorIfWrong(): boolean {
+  highlightAndDeleteErrorIfWrong() {
     if (this.val != null) {
       const numsInDomain = this.numbersInDomain()
 
-      if (typeof this.val === 'number') {
+      if (this.val instanceof Hints) {
+        const hints = this.val
+
+        numsInDomain.bits.forEach(n => {
+          if (hints.has(n)) {
+            if (this.sudoku.autoDeleteErrorHints) {
+              hints.remove(n)
+              this.update()
+            } else {
+              this.highlightHintError(n)
+            }
+          }
+        })
+      } else {
         const error = numsInDomain.has(this.val)
         if (error) this.highlightError()
         return error
-      } else {
-        const value: Hints = this.val
-        let error = false
-
-        numsInDomain.bits.forEach(n => {
-          if (value.has(n)) {
-            this.highlightHintError(n)
-            error = true
-          }
-        })
-        return error
       }
     }
-    return false
   }
 
   highlightError() {
@@ -183,9 +184,9 @@ export class Cell {
       if (cell !== this && typeof cell.val === 'number') nums.set(cell.val)
     }
 
-    this.parent.rows[this.row].forEach(callback)
-    this.parent.cols[this.col].forEach(callback)
-    this.parent.blocks[this.blockIdx].forEach(callback)
+    this.sudoku.rows[this.row].forEach(callback)
+    this.sudoku.cols[this.col].forEach(callback)
+    this.sudoku.blocks[this.blockIdx].forEach(callback)
 
     return nums
   }
@@ -203,16 +204,16 @@ export class Cell {
             cell === this || !(cell.val instanceof Hints) || !cell.val.has(bit)
 
           if (
-            this.parent.rows[this.row].every(callback) ||
-            this.parent.cols[this.col].every(callback) ||
-            this.parent.blocks[this.blockIdx].every(callback)
+            this.sudoku.rows[this.row].every(callback) ||
+            this.sudoku.cols[this.col].every(callback) ||
+            this.sudoku.blocks[this.blockIdx].every(callback)
           ) {
             this.highlightHintTip(bit)
           } else {
             [
-              this.parent.rows[this.row],
-              this.parent.cols[this.col],
-              this.parent.blocks[this.blockIdx],
+              this.sudoku.rows[this.row],
+              this.sudoku.cols[this.col],
+              this.sudoku.blocks[this.blockIdx],
             ].forEach((cells: Cell[]) => {
               const colHiddenSiblings: Cell[] = []
               const colHiddenNotSiblings: Cell[] = []
