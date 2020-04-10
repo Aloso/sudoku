@@ -1,4 +1,5 @@
 import { CellType, Sudoku } from './sudoku'
+import { Bit, fromBit, isNum, Num, toBit } from './numbers'
 
 const sudoku = new Sudoku()
 
@@ -13,21 +14,21 @@ const keydownListener = (e: KeyboardEvent) => {
 
     if (e.key === 'Backspace') {
       e.preventDefault()
-      cell.value = undefined
+      cell.value = null
 
       if (cell.type === CellType.Init) {
         cell.type = CellType.Normal
       }
-    } else if (!isNaN(+e.key) && e.key !== '0') {
-      const val = +e.key
+    } else if (isNum(+e.key)) {
+      const bit = toBit[+e.key as Num]
       e.preventDefault()
 
       if (sudoku.nextType === CellType.Hint) {
-        cell.toggleHint(val)
+        cell.toggleHint(bit)
       } else {
         cell.type = sudoku.nextType
-        cell.value = val
-        sudoku.focus(val)
+        cell.value = bit
+        sudoku.focus(bit)
       }
     } else if (e.key === 'i') {
       sudoku.nextType = sudoku.nextType === CellType.Init
@@ -55,9 +56,9 @@ function init(matrix: string[]) {
     const mat = matrix[ri].split(/ +/g)
 
     for (let ci = 0; ci < row.length; ++ci) {
-      const v = mat[ci]
-      if (v !== '-') {
-        row[ci].value = +v
+      const v = +mat[ci]
+      if (isNum(v)) {
+        row[ci].value = toBit[v]
         row[ci].type = CellType.Init
       }
     }

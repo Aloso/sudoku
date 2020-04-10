@@ -1,4 +1,6 @@
 import { Cell, Value } from './cell'
+import { Hints } from './hints'
+import { allBits, Bit, fromBit } from './numbers'
 
 export enum CellType {
   Normal = 'normal',
@@ -18,7 +20,7 @@ export class Sudoku {
   private sel: Cell | null = null
   private nextTy: CellType = CellType.Normal
 
-  private focused: number[] = []
+  private focused: Bit[] = []
 
   private hasErrors = false
   private autoHlErrors = true
@@ -111,17 +113,18 @@ export class Sudoku {
 
   focus(val: Value) {
     this.focused.forEach(f => this.elem.classList.remove('f' + f))
+
     if (val == null) {
       this.focused = []
-    } else if (typeof val === 'number') {
+    } else if (val instanceof Hints) {
+      this.focused = allBits.filter(bit => {
+        if (val.has(bit)) this.elem.classList.add('f' + bit)
+        else this.elem.classList.remove('f' + bit)
+        return val.has(bit)
+      })
+    } else {
       this.focused = [val]
       this.elem.classList.add('f' + val)
-    } else {
-      this.focused = [1, 2, 3, 4, 5, 6, 7, 8, 9].filter(n => {
-        if (val[n]) this.elem.classList.add('f' + n)
-        else this.elem.classList.remove('f' + n)
-        return val[n]
-      })
     }
   }
 

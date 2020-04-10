@@ -112,21 +112,24 @@ nav
 
 .sudoku.f1 td.c1,
 .sudoku.f2 td.c2,
-.sudoku.f3 td.c3,
 .sudoku.f4 td.c4,
-.sudoku.f5 td.c5,
-.sudoku.f6 td.c6,
-.sudoku.f7 td.c7,
 .sudoku.f8 td.c8,
-.sudoku.f9 td.c9
+.sudoku.f16 td.c16,
+.sudoku.f32 td.c32,
+.sudoku.f64 td.c64,
+.sudoku.f128 td.c128,
+.sudoku.f256 td.c256
   color: #008aff
   text-shadow: 0 0 2px white, 0 0 4px white
 
 td.tip:not(.error)
-  background-color: #cffabb !important
+  background-color: #c4f0ad !important
 
   &.selected
-    background-color: #baf097 !important
+    background-color: #b5f097 !important
+
+td td.tip:not(.error)
+  background-color: #deffcc !important
 
 td.error
   color: red !important

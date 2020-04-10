@@ -1,50 +1,36 @@
 import { CellType, Sudoku } from './sudoku'
+import { Hints } from './hints'
+import { Bit, fromBit } from './numbers'
 
 export type Value =
-  | number
-  | undefined
+  | null
+  | Bit
   | Hints
-
-export type Hints = boolean[]
 
 function hintsToString(hints: Hints): string {
   return `<table class="hints">
     <tr>
-      <td class="c1${!hints[1] ? ' hide' : ''}">1</td>
-      <td class="c2${!hints[2] ? ' hide' : ''}">2</td>
-      <td class="c3${!hints[3] ? ' hide' : ''}">3</td>
+      <td class="c1${!hints.has(1) ? ' hide' : ''}">1</td>
+      <td class="c2${!hints.has(2) ? ' hide' : ''}">2</td>
+      <td class="c4${!hints.has(4) ? ' hide' : ''}">3</td>
     </tr>
     <tr>
-      <td class="c4${!hints[4] ? ' hide' : ''}">4</td>
-      <td class="c5${!hints[5] ? ' hide' : ''}">5</td>
-      <td class="c6${!hints[6] ? ' hide' : ''}">6</td>
+      <td class="c8${!hints.has(8) ? ' hide' : ''}">4</td>
+      <td class="c16${!hints.has(16) ? ' hide' : ''}">5</td>
+      <td class="c32${!hints.has(32) ? ' hide' : ''}">6</td>
     </tr>
     <tr>
-      <td class="c7${!hints[7] ? ' hide' : ''}">7</td>
-      <td class="c8${!hints[8] ? ' hide' : ''}">8</td>
-      <td class="c9${!hints[9] ? ' hide' : ''}">9</td>
+      <td class="c64${!hints.has(64) ? ' hide' : ''}">7</td>
+      <td class="c128${!hints.has(128) ? ' hide' : ''}">8</td>
+      <td class="c256${!hints.has(256) ? ' hide' : ''}">9</td>
     </tr>
   </table>`
-}
-
-function isSubsetOfHints(outer: Hints, inner: Hints): boolean {
-  for (let i = 1; i <= 9; ++i) {
-    if (outer[i] && !inner[i]) return false
-  }
-  return true
-}
-
-function hasHintIntersection(h1: Hints, h2: Hints): boolean {
-  for (let i = 1; i <= 9; ++i) {
-    if (h1[i] && h2[i]) return true
-  }
-  return false
 }
 
 export class Cell {
   readonly elem = document.createElement('td')
 
-  private val: Value
+  private val: Value = null
   private ty: CellType = CellType.Normal
 
   constructor(
@@ -111,24 +97,27 @@ export class Cell {
     }
   }
 
-  toggleHint(hint: number) {
+  toggleHint(hint: Bit) {
     this.type = CellType.Hint
 
-    if (typeof this.val !== 'object') this.val = []
-    this.val[hint] = !this.val[hint]
+    if (!(this.val instanceof Hints)) this.val = new Hints()
+    this.val.toggle(hint)
 
     this.updateContent()
   }
 
   fillAllHints() {
-    if (typeof this.val !== 'number') {
-      this.val = [false, true, true, true, true, true, true, true, true, true]
+    if (this.val instanceof Hints) {
+      this.val.fill()
+    } else if (this.val == null) {
+      this.val = new Hints()
+      this.val.fill()
     }
   }
 
-  removeHint(num: number) {
-    if (this.val != null && typeof this.val !== 'number') {
-      this.val[num] = false
+  removeHint(bit: Bit) {
+    if (this.val instanceof Hints) {
+      this.val.remove(bit)
     }
   }
 
@@ -160,16 +149,16 @@ export class Cell {
       const numsInDomain = this.numbersInDomain()
 
       if (typeof this.val === 'number') {
-        const error = numsInDomain[this.val]
+        const error = numsInDomain.has(this.val)
         if (error) this.highlightError()
         return error
       } else {
         const value: Hints = this.val
         let error = false
 
-        numsInDomain.forEach((v, i) => {
-          if (v && value[i]) {
-            this.highlightHintError(i)
+        numsInDomain.bits.forEach(n => {
+          if (value.has(n)) {
+            this.highlightHintError(n)
             error = true
           }
         })
@@ -183,15 +172,15 @@ export class Cell {
     this.elem.classList.add('error')
   }
 
-  highlightHintError(hint: number) {
+  highlightHintError(hint: Bit) {
     this.elem.querySelector(`.c${hint}`)?.classList?.add('error')
   }
 
-  numbersInDomain(): boolean[] {
-    const nums = [false, false, false, false, false, false, false, false, false, false]
+  numbersInDomain(): Hints {
+    const nums = new Hints()
 
     const callback = (cell: Cell) => {
-      if (cell !== this && typeof cell.val === 'number') nums[cell.val] = true
+      if (cell !== this && typeof cell.val === 'number') nums.set(cell.val)
     }
 
     this.parent.rows[this.row].forEach(callback)
@@ -204,58 +193,50 @@ export class Cell {
   highlightNakedAndHidden() {
     if (this.ty === CellType.Hint) {
       const hints = this.val as Hints
-      let nakedCount = 0
-      for (const hint of hints) {
-        if (hint) nakedCount++
-      }
+      const nakedCount = hints.len
+
       if (nakedCount === 1) {
         this.highlightTip()
       } else {
-        hints.forEach((hint, i) => {
-          if (hint) {
-            const callback = (cell: Cell): boolean =>
-              cell === this || typeof cell.val !== 'object' || !cell.val[i]
+        hints.bits.forEach(bit => {
+          const callback = (cell: Cell): boolean =>
+            cell === this || !(cell.val instanceof Hints) || !cell.val.has(bit)
 
-            if (
-              this.parent.rows[this.row].every(callback) ||
-              this.parent.cols[this.col].every(callback) ||
-              this.parent.blocks[this.blockIdx].every(callback)
-            ) {
-              this.highlightHintTip(i)
-            } else {
-              [
-                this.parent.rows[this.row],
-                this.parent.cols[this.col],
-                this.parent.blocks[this.blockIdx],
-              ].forEach((cells: Cell[]) => {
-                const colHiddenSiblings: Cell[] = []
-                const colHiddenNotSiblings: Cell[] = []
+          if (
+            this.parent.rows[this.row].every(callback) ||
+            this.parent.cols[this.col].every(callback) ||
+            this.parent.blocks[this.blockIdx].every(callback)
+          ) {
+            this.highlightHintTip(bit)
+          } else {
+            [
+              this.parent.rows[this.row],
+              this.parent.cols[this.col],
+              this.parent.blocks[this.blockIdx],
+            ].forEach((cells: Cell[]) => {
+              const colHiddenSiblings: Cell[] = []
+              const colHiddenNotSiblings: Cell[] = []
 
-                for (const cell of cells) {
-                  if (cell !== this && typeof cell.val === 'object') {
-                    if (isSubsetOfHints(cell.val, hints)) {
-                      colHiddenSiblings.push(cell)
-                    } else {
-                      colHiddenNotSiblings.push(cell)
-                    }
+              for (const cell of cells) {
+                if (cell !== this && cell.val instanceof Hints) {
+                  if (cell.val.isSubsetOf(hints)) {
+                    colHiddenSiblings.push(cell)
+                  } else {
+                    colHiddenNotSiblings.push(cell)
                   }
                 }
+              }
 
-                if (
-                  colHiddenSiblings.length >= nakedCount - 1 &&
-                  colHiddenNotSiblings.some((c) => hasHintIntersection(c.val as Hints, hints))
-                ) {
-                  const hintSelectors: string[] = []
-                  hints.forEach((h, i) => {
-                    if (h) hintSelectors.push(`.c${i}`)
-                  })
-                  const hintSelector = hintSelectors.join(', ')
+              if (
+                colHiddenSiblings.length >= nakedCount - 1 &&
+                colHiddenNotSiblings.some((c) => (c.val as Hints).intersects(hints))
+              ) {
+                const hintSelector = hints.bits.map(n => `.c${n}`).join(', ')
 
-                  this.highlightHintTips(hintSelector)
-                  colHiddenSiblings.forEach(sib => sib.highlightHintTips(hintSelector))
-                }
-              })
-            }
+                this.highlightHintTips(hintSelector)
+                colHiddenSiblings.forEach(sib => sib.highlightHintTips(hintSelector))
+              }
+            })
           }
         })
       }
@@ -266,8 +247,8 @@ export class Cell {
     this.elem.classList.add('tip')
   }
 
-  highlightHintTip(hint: number) {
-    this.elem.querySelector(`.c${hint}`)?.classList?.add('tip')
+  highlightHintTip(bit: Bit) {
+    this.elem.querySelector(`.c${bit}`)?.classList?.add('tip')
   }
 
   highlightHintTips(hintSelector: string) {
@@ -275,12 +256,12 @@ export class Cell {
   }
 
   private updateContent() {
-    switch (typeof this.val) {
-      case 'number': this.elem.innerHTML = '' + this.val
-        break
-      case 'object': this.elem.innerHTML = hintsToString(this.val)
-        break
-      case 'undefined': this.elem.innerHTML = ''
+    if (this.val instanceof Hints) {
+      this.elem.innerHTML = hintsToString(this.val)
+    } else if (this.val == null) {
+      this.elem.innerHTML = ''
+    } else {
+      this.elem.innerHTML = '' + fromBit[this.val]
     }
     this.onChange(this.row, this.col, this.val)
   }
