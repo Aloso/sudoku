@@ -1,6 +1,6 @@
 import { Cell, Value } from './cell'
 import { Hints } from './hints'
-import { allBits, Bit } from './numbers'
+import { allBits, Bit, fromBit, Num, toBit } from './numbers'
 
 export enum CellType {
   Normal = 'normal',
@@ -36,7 +36,10 @@ export class Sudoku {
     const changeCell = (row: number, col: number, v: Value) => {
       this.focus(v)
       if (this.autoHlErrors) this.highlightAndDeleteErrors()
-      if (this.autoHlTips) this.highlightTips()
+      if (this.autoHlTips) {
+        this.highlightTips()
+        this.highlightBlockTips()
+      }
     }
 
     for (let i = 0; i < size; i++) {
@@ -181,5 +184,52 @@ export class Sudoku {
 
   get autoDeleteErrorHints(): boolean {
     return this.autoDelErrorHints
+  }
+
+  highlightBlockTips() {
+    const rows = new Hints()
+    const cols = new Hints()
+
+    for (const cells of this.blocks) {
+      const hintCells = cells.filter((c) => c.value instanceof Hints)
+
+      if (hintCells.length > 1) {
+        const blockIdx = hintCells[0].blockIdx
+
+        for (const bit of allBits) {
+          rows.empty()
+          cols.empty()
+          for (const cell of hintCells) {
+            const value = cell.value as Hints
+            if (value.has(bit)) {
+              rows.set(toBit[cell.row + 1 as Num])
+              cols.set(toBit[cell.col + 1 as Num])
+            }
+          }
+
+          if (cols.len === rows.len) continue
+
+          if (cols.len === 1) {
+            const candidates = this.cols[fromBit[cols.bits[0]] - 1]
+            for (const candidate of candidates) {
+              if (candidate.blockIdx !== blockIdx) {
+                if (candidate.value instanceof Hints && candidate.value.has(bit)) {
+                  candidate.highlightHintTip(bit, 'warn')
+                }
+              }
+            }
+          } else if (rows.len === 1) {
+            const candidates = this.rows[fromBit[rows.bits[0]] - 1]
+            for (const candidate of candidates) {
+              if (candidate.blockIdx !== blockIdx) {
+                if (candidate.value instanceof Hints && candidate.value.has(bit)) {
+                  candidate.highlightHintTip(bit, 'warn')
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }

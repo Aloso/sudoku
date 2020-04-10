@@ -51,4 +51,12 @@ export class Hints {
   fill() {
     this.val = MAX_HINTS
   }
+
+  empty() {
+    this.val = 0
+  }
+
+  toString(): string {
+    return ('0000000000' + this.val.toString(2)).slice(-9)
+  }
 }

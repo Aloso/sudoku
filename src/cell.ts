@@ -56,6 +56,10 @@ export class Cell {
     })
   }
 
+  get value(): Value {
+    return this.val
+  }
+
   set value(newValue: Value) {
     if (newValue !== this.val) {
       if (typeof this.val === 'number') {
@@ -224,8 +228,11 @@ export class Cell {
 
               for (const cell of cells) {
                 if (cell !== this && cell.val instanceof Hints) {
-                  if (cell.val.isSubsetOf(hints)) hiddenSiblings.push(cell)
-                  else otherHintSiblings.push(cell)
+                  if (cell.val.isSubsetOf(hints)) {
+                    if (cell.val.len > 1) hiddenSiblings.push(cell)
+                  } else {
+                    otherHintSiblings.push(cell)
+                  }
                 }
               }
 
