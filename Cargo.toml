@@ -1,0 +1,22 @@
+[package]
+name = "sudoku"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rand = "0.9.2"
+
+[profile.release]
+codegen-units = 1
+opt-level = 3
+panic = "abort"
+lto = "fat"
+debug = true
+
+[[example]]
+name = "generate"
+path = "./examples/generate.rs"
+
+[[example]]
+name = "solve"
+path = "./examples/solve.rs"
