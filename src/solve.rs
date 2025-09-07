@@ -9,9 +9,9 @@ pub struct SolveOptions {
     pub max_solutions: usize,
 }
 
-impl Default for SolveOptions {
-    fn default() -> Self {
-        Self { max_solutions: 1 }
+impl SolveOptions {
+    pub fn with_max_solutions(max_solutions: usize) -> Self {
+        SolveOptions { max_solutions }
     }
 }
 

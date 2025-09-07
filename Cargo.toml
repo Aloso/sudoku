@@ -11,7 +11,6 @@ codegen-units = 1
 opt-level = 3
 panic = "abort"
 lto = "fat"
-debug = true
 
 [[example]]
 name = "generate"
