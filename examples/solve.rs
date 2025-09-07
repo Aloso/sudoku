@@ -1,16 +1,6 @@
 use std::time::Instant;
 
-macro_rules! row {
-    (field $n:literal) => {
-        ::sudoku::Field::new($n)
-    };
-    (field _) => {
-        ::sudoku::Field::full()
-    };
-    ($($t:tt)*) => {
-        [$( row!(field $t) ),*]
-    }
-}
+use sudoku::{SolveOptions, row};
 
 fn main() {
     let start = Instant::now();
@@ -38,7 +28,7 @@ fn main() {
         row![_ 4 _  _ _ 1  _ _ _],
     ]);
     let mut acc = Vec::new();
-    sudoku::solve(&grid, &mut acc, sudoku::SolveOptions::with_max_solutions(5));
+    sudoku::solve(&grid, &mut acc, SolveOptions::with_max_solutions(5));
 
     eprintln!("solved in {:.2?}", start.elapsed());
     eprintln!("found {} solutions", acc.len());
